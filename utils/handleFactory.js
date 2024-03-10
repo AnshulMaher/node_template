@@ -4,7 +4,6 @@ const APIFeatures = require('./apiFeatures');
 
 exports.getAll = (Model) =>
   catchAsync(async (req, res) => {
-    const modelName = Model.collection.collectionName;
     const features = new APIFeatures(Model.find(), req.query)
       .filter()
       .sort()
@@ -15,30 +14,18 @@ exports.getAll = (Model) =>
     res.status(200).json({
       status: 'success',
       results: documents.length,
-      data: {
-        [modelName]: documents,
-      },
+      data: documents,
     });
   });
 
 exports.createOne = (Model) =>
   catchAsync(async (req, res) => {
-    let modelName = Model.collection.collectionName;
-    modelName = modelName.substring(0, modelName.length - 1);
-    const data = { ...req.body };
-    const document = await Model.create(data);
-    res.status(201).json({
-      status: 'success',
-      data: {
-        [modelName]: document,
-      },
-    });
+    const document = await Model.create(req.body);
+    res.status(201).json({ status: 'success', data: document });
   });
 
 exports.getOne = (Model, populateOptions) =>
   catchAsync(async (req, res, next) => {
-    let modelName = Model.collection.collectionName;
-    modelName = modelName.substring(0, modelName.length - 1);
     let query = Model.findById(req.params.id);
     if (populateOptions) query = query.populate(populateOptions);
     const document = await query;
@@ -46,19 +33,11 @@ exports.getOne = (Model, populateOptions) =>
       return next(new AppError(404, 'No document found with that ID'));
     }
 
-    res.status(200).json({
-      status: 'success',
-      data: {
-        // data: document
-        [modelName]: document,
-      },
-    });
+    res.status(200).json({ status: 'success', data: document });
   });
 
 exports.updateOne = (Model) =>
   catchAsync(async (req, res, next) => {
-    let modelName = Model.collection.collectionName;
-    modelName = modelName.substring(0, modelName.length - 1);
     const document = await Model.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
@@ -66,12 +45,7 @@ exports.updateOne = (Model) =>
     if (!document) {
       return next(new AppError(404, 'No document found with that ID'));
     }
-    res.status(200).json({
-      status: 'success',
-      data: {
-        [modelName]: document,
-      },
-    });
+    res.status(200).json({ status: 'success', data: document });
   });
 
 exports.deleteOne = (Model) =>
@@ -80,8 +54,5 @@ exports.deleteOne = (Model) =>
     if (!document) {
       return next(new AppError(404, 'No document found with that ID'));
     }
-    res.status(204).json({
-      status: 'success',
-      data: null,
-    });
+    res.status(204).json({ status: 'success' });
   });
